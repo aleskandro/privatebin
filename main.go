@@ -124,7 +124,6 @@ func main() {
 		privateBinBaseURL = privateBinBaseURL[:len(privateBinBaseURL)-1]
 	}
 
-	fmt.Println(privateBinBaseURL)
 	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
