@@ -2,15 +2,16 @@
 
 A CLI for PrivateBin allowing easy pasting from the Terminal.
 
-## Installation
+## Build & Install
 
 ```shell script
-wget https://github.com/matthewpi/privatebin/releases/download/v0.0.1/privatebin -P /usr/bin/ && chmod +x /usr/bin/privatebin
+go build && install -m 755 ./privatebin /usr/local/bin/privatebin
 ```
 
 ## Usage
 
 Currently, `privatebin` only support piping inputs on the Command Line.
+
 
 ```shell script
 # Using Echo
@@ -22,3 +23,12 @@ tail -n 20 <FILE> | privatebin
 # Using Cat
 cat <FILE> | privatebin
 ```
+
+## Using another server 
+
+This fork, moreover support to set another privatebin server to use.
+
+```shell
+echo "hello world" | privatebin -s https://my-privatebin.private.server
+```
+

@@ -7,25 +7,30 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"github.com/pborman/getopt/v2"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 
 	"github.com/btcsuite/btcutil/base58"
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/matthewpi/privatebin/utils"
+	"github.com/aleskandro/privatebin/utils"
 )
 
 const (
-	specIterations  = 100000
-	specKeySize     = 256
-	specTagSize     = 128
-	specAlgorithm   = "aes"
-	specMode        = "gcm"
-	specCompression = "none"
+	specIterations       = 100000
+	specKeySize          = 256
+	specTagSize          = 128
+	specAlgorithm        = "aes"
+	specMode             = "gcm"
+	specCompression      = "none"
+	defaultPrivateBinURL = "https://privatebin.net"
 )
+
+var privateBinBaseURL string
 
 // PasteRequest .
 type PasteRequest struct {
@@ -95,8 +100,31 @@ func (paste *PasteData) adata() []interface{} {
 	}
 }
 
+func init() {
+	helpMsg := fmt.Sprintf("The PrivateBin server to send text to (default to \"%s\").",
+		defaultPrivateBinURL)
+	getopt.FlagLong(&privateBinBaseURL, "server", 's', helpMsg)
+}
+
 func main() {
 	// Read from STDIN (Piped input)
+	getopt.ParseV2()
+	if len(privateBinBaseURL) == 0 {
+		privateBinBaseURL = defaultPrivateBinURL
+	}
+
+	// Validation of the URI
+	_, err := url.ParseRequestURI(privateBinBaseURL)
+	if err != nil {
+		panic(err)
+	}
+
+	// Removes leading slash(s)
+	for privateBinBaseURL[len(privateBinBaseURL)-1] == '/' {
+		privateBinBaseURL = privateBinBaseURL[:len(privateBinBaseURL)-1]
+	}
+
+	fmt.Println(privateBinBaseURL)
 	input, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
@@ -148,7 +176,7 @@ func main() {
 
 	// Create a new HTTP Client and HTTP Request.
 	client := &http.Client{}
-	req, err := http.NewRequest("POST", "https://privatebin.net", bytes.NewBuffer(body))
+	req, err := http.NewRequest("POST", privateBinBaseURL, bytes.NewBuffer(body))
 	if err != nil {
 		panic(err)
 		return
@@ -188,7 +216,7 @@ func main() {
 		return
 	}
 
-	fmt.Printf("%s%s#%s\n", "https://privatebin.net", pasteResponse.URL, base58.Encode(masterKey))
+	fmt.Printf("%s%s#%s\n", privateBinBaseURL, pasteResponse.URL, base58.Encode(masterKey))
 }
 
 func encrypt(master []byte, message []byte) (*PasteData, error) {
